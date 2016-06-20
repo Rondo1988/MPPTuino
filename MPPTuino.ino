@@ -29,24 +29,7 @@ ADC *adc = new ADC(); // adc object
 uint32_t telLastTime = 0;
 uint32_t heartLastTime = 0;
 
-
-
-
-
-// ISR(TIMER1_COMPA_vect){
-	
-// 	#ifdef USBDEBUG
-// 	Serial.println( "MPPT Task" );
-// 	#endif
-// 	  /** get sensor values **/
-// 	xTracker.vGetSensors();
-
-// 	/** TODO: SET MODE FUNCTION **/
-
-
-// 	/** Run Algorithm **/
-// 	xTracker.vRunAlgorithm();
-// }
+const char setMenu[] = ""
 
 void prvMPPTTask( void  )
 {
@@ -100,7 +83,7 @@ void prvTelemetryTask( void )
         **/
 
         msg.len = 6;
-        msg.id = 0x200 | ( (uint8_t)(xTracker.vGetMPPTId() ) << 4 );
+        msg.id = 0x200 | ( (uint8_t)(xTracker.getMPPTid() ) << 4 );
         msg.buf[0] = (uint16_t)data.Errors;
         msg.buf[1] = (uint16_t)data.Mode;
         msg.buf[2] = (uint16_t)data.PVT;        // LSBs
@@ -116,7 +99,7 @@ void prvTelemetryTask( void )
         *   MPPTN_OUT_I |   MPPTN_IN_I  |   MPPTN_OUT_V |   MPPTN_IN_V
         **/
         msg.len = 8;
-        msg.id = 0x200 | ( (uint8_t)(xTracker.vGetMPPTId() ) << 4 ) | 0x001;
+        msg.id = 0x200 | ( (uint8_t)(xTracker.getMPPTid() ) << 4 ) | 0x001;
         msg.buf[0] = (uint16_t)data.PVV;        // LSBs
         msg.buf[1] = (uint16_t)(data.PVV) >> 8;   // MSBs
         msg.buf[2] = (uint16_t)data.HVV;        // LSBs
@@ -148,31 +131,6 @@ void prvTelemetryTask( void )
     // }
 
 }
-
-//! Flashes an LED then waits configured time to flash again
-
-// void prvHeartBeatLEDTask( void )
-// {
-    /* The parameters are not used.  Prevent compiler warnings. */
-    //( void ) pvParameters;
-  	// for(;;)
-  	// {
-    	// digitalWriteFast( globalHEARTBEAT_PIN, !digitalReadFast(globalHEARTBEAT_PIN) );
-    	//vTaskDelay( mainHEARTBEAT_LED_FLASH_MS );
-	    //digitalWriteFast( globalHEARTBEAT_PIN, LOW );
-  		//vTaskDelay( mainHEARTBEAT_LED_TIMER_PERIOD_MS - mainHEARTBEAT_LED_FLASH_MS );
- 	  //}
-// }
-
-/**
-*   Timer which wakes up the MPPT task at the set time interval
-*
-*/
-// void prvMPPTTimerCallback( TimerHandle_t xMPPTTimer )
-// {
-//     vTaskResume( gxMPPTTask );
-// }
-
 
 void setup() {
 
@@ -290,51 +248,9 @@ void setup() {
 
     digitalWrite(globalSTATUS1_LED_PIN, HIGH);
   
-    /** FreeRTOS Task Creation */
-    // xTaskCreate( prvMPPTTask , "MPPT", configMINIMAL_STACK_SIZE, NULL,  
-    //     mainMPPT_TASK_PRIORITY, &gxMPPTTask );
-    // Check for bad task creation
-//    if ( gxMPPTTask == NULL ){
-//        Serial.print("MPPT Task wasn't created! :-(\n");
-//    }
-//    else{
-//        Serial.print("MPPT Task Created!\n");
-//    }
-    
-    // xTaskCreate( prvHeartBeatLEDTask , "HRTB", configMINIMAL_STACK_SIZE, NULL, 
-    //     mainHEARTBEAT_TASK_PRIORITY, &gxHeartBeatTask );
-    // Check for bad task creation
-//    if ( gxHeartBeatTask == NULL ){
-//        Serial.print("Heartbeat Task wasn't created! :-(\n");
-//    }
-//    else{
-//        Serial.print("Heartbeat Task Created!\n");
-//    }
-    
-    // xTaskCreate( prvTelemetryTask , "TLM", configMINIMAL_STACK_SIZE, NULL,      
-    //     mainTELEMETRY_TASK_PRIORITY, &gxTelemetryTask );    
-    // Check for bad task creation
-//    if ( gxTelemetryTask == NULL ){
-//        Serial.print("Telemetry Task wasn't created! :-(\n");
-//    }
-//    else{
-//        Serial.print("Telemetry Task Created!\n");
-//    }
-    
-    // gxMPPTTimer = xTimerCreate( "MPPT", mainMPPT_DEFAULT_TIMER_PERIOD_MS, pdTRUE, 0,       
-    //     prvMPPTTimerCallback );
-    // Check for bad timer creation
-//    if ( gxMPPTTimer == NULL ){
-//        Serial.print("MPPT Timer wasn't created! :-(\n");
-//    }
-//    else{
-//        Serial.print("MPPT Timer Created!\n");
-//    }
-//    
-//
- 
 
     /** Set to BOOST MODE for testing **/
+    // TODO: 
     xTracker.setMode(mpptBOOST_MASK);
 
 
@@ -351,46 +267,33 @@ void setup() {
 
 void loop() {
     
-    /** Poor Man (Open Loop) Scheduler **/
-    // TODO: Use timers and Interrupt callbacks 
-    // if ( micros() - mpptLastTime >= globalMPPT_MS )
-    // {
-    //     mpptLastTime = micros();
-    //     prvMPPTTask();
-    // }
-    //else if ( mpptLastTime > micros() ) // handle overflow
-    // {
-    //     mpptLastTime = ((uint32_t)4294967295 - mpptLastTime) + micros();
-    // }
-    
-    if ( micros() - telLastTime >= globalTELEMETRY_MS )
-    {
-        telLastTime = micros();
-        prvTelemetryTask();
-    }
-    else if ( telLastTime > micros() ) // handle overflow
-    {
-        telLastTime = ((uint32_t)4294967295 - telLastTime) + micros();
-    }
-    
-    if ( micros() - heartLastTime >= globalHEARTBEAT_MS )
-    {
-        heartLastTime = micros();
-        digitalWriteFast( globalHEARTBEAT_PIN, !digitalReadFast(globalHEARTBEAT_PIN) );
-    }
-    else if ( heartLastTime > micros() ) // handle overflow
-    {
-        heartLastTime = ((uint32_t)4294967295 - heartLastTime) + micros();
-    }
+  /** Main Loop **/
+  /** MPPT Loop is handled by mpptTimer, by default runs at 100Hz *
+  * This settings is configured via conf.read() and conf.write()
+  */
+  
+  if ( micros() - telLastTime >= globalTELEMETRY_MS )
+  {
+      telLastTime = micros();
+      prvTelemetryTask();
+  }
+  else if ( telLastTime > micros() ) // handle overflow
+  {
+      telLastTime = ((uint32_t)4294967295 - telLastTime) + micros();
+  }
+  
+  if ( micros() - heartLastTime >= globalHEARTBEAT_MS )
+  {
+      heartLastTime = micros();
+      digitalWriteFast( globalHEARTBEAT_PIN, !digitalReadFast(globalHEARTBEAT_PIN) );
+  }
+  else if ( heartLastTime > micros() ) // handle overflow
+  {
+      heartLastTime = ((uint32_t)4294967295 - heartLastTime) + micros();
+  }
 
-    // TODO: Keyboard input
-    /** Handle Console Commands **/
+  // TODO: Keyboard input
+  /** Handle Console Commands **/
 
-
-  // put your main code here, to run repeatedly:
-   //Serial.println( "MainLoop Start" );
-  // xTimerStart( gxMPPTTimer, mainDONT_BLOCK );
-  // vTaskStartScheduler( );
-
-    //Serial.println( "uh oh, yhou shouldn't be here!" );
+  Serial.println( "uh oh, yhou shouldn't be here!" );
 }

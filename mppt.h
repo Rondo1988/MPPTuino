@@ -102,10 +102,10 @@ public:
     {}
 
   // Get Setting
-  float Get ( uint8_t u8Setting );
+  void* read ( uint8_t Setting );
 
   // Store Setting
-  void Store (uint8_t u8Setting, float fVal);
+  void write (uint8_t Setting, void* fVal);
 
   // Var Seettings
 
@@ -382,11 +382,7 @@ class MPPT
 	void vGetSensors ( void );
 
 
-	// FreeRTOS Task
-	//! Task which runs at configured rate (default 100Hz)
-	//void vTask ( void *pvParameters );
-
-	uint8_t vGetMPPTId ( void )
+	uint8_t getMPPTid ( void )
 	{   
 		return conf.MPPTId; 
 	}
